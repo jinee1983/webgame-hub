@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>게임 제목</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+  :root {
+    --bg: #0b1624; --bg2: #0f2037; --panel: #142a45; --panel2: #1a3556;
+    --line: #29476b; --ink: #e9eff7; --mute: #93a8c0;
+    --gold: #f4bb4e; --gold-ink: #2a1c00;
+    --font-d: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    --font: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5;
+    min-height: 100dvh;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+             max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  h1, h2, p { margin: 0; }
+
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  header.top {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-bottom: 12px;
+  }
+  .title { font-family: var(--font-d); font-size: 26px; letter-spacing: .02em; }
+  .chip {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px; font-size: 13px;
+  }
+  .chip:hover { background: var(--panel2); }
+
+  #home { display: grid; gap: 16px; padding-top: 8px; }
+  .hero h1 { font-family: var(--font-d); font-weight: 400; font-size: clamp(28px, 6vw, 44px); line-height: 1.1; }
+  .hero h1 em { font-style: normal; color: var(--gold); }
+  .hero p { color: var(--mute); margin-top: 10px; max-width: 44ch; }
+
+  .btn {
+    border: 0; border-radius: 10px; padding: 12px 20px;
+    font-weight: 700; background: var(--gold); color: var(--gold-ink); font-size: 16px;
+  }
+  .btn:hover { filter: brightness(1.07); }
+  .btn.ghost { background: var(--panel); color: var(--ink); border: 1px solid var(--line); }
+  .btn.ghost:hover { background: var(--panel2); filter: none; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px;
+  }
+
+  #game { display: grid; gap: 12px; }
+  .stage {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    min-height: 320px; display: grid; place-items: center; padding: 24px;
+    text-align: center; color: var(--mute);
+  }
+
+  .side { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="title">게임 제목</div>
+    <button class="chip" id="btnRules">규칙</button>
+  </header>
+
+  <section id="home">
+    <div class="hero">
+      <h1><em>한 줄 소개</em>가<br>들어갈 자리</h1>
+      <p>이 게임의 짧은 설명. 무엇을 하는 게임인지, 몇 명이서 하는지 적습니다.</p>
+    </div>
+    <div class="panel" style="display:grid;gap:10px">
+      <button class="btn" id="btnStart">게임 시작</button>
+      <button class="btn ghost" id="btnBack">허브로 돌아가기</button>
+    </div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="stage" id="stage">여기에 게임 보드/UI가 들어갑니다.</div>
+    <div class="side">
+      <button class="btn ghost" id="btnQuit">나가기</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+
+  const state = {
+    phase: 'home', // 'home' | 'playing' | 'over'
+  };
+
+  function render() {
+    $('#home').hidden = state.phase !== 'home';
+    $('#game').hidden = state.phase === 'home';
+  }
+
+  function startGame() {
+    state.phase = 'playing';
+    render();
+  }
+
+  function endGame() {
+    state.phase = 'over';
+    render();
+  }
+
+  function quit() {
+    state.phase = 'home';
+    render();
+  }
+
+  function showRules() {
+    alert('규칙을 여기에 적습니다.');
+  }
+
+  $('#btnStart').addEventListener('click', startGame);
+  $('#btnQuit').addEventListener('click', quit);
+  $('#btnRules').addEventListener('click', showRules);
+  $('#btnBack').addEventListener('click', () => {
+    if (history.length > 1) history.back();
+    else window.close();
+  });
+
+  render();
+
+  window.__game = { state, startGame, endGame, quit };
+})();
+</script>
+</body>
+</html>

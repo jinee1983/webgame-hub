@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>웹게임 허브</title>
+<style>
+  :root {
+    --bg: #0b1624; --bg2: #0f2037; --panel: #142a45; --panel2: #1a3556;
+    --line: #29476b; --ink: #e9eff7; --mute: #93a8c0; --gold: #f4bb4e; --gold-ink: #2a1c00;
+    --font-d: 'Black Han Sans', 'Noto Sans KR', sans-serif;
+    --font: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5;
+    min-height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+             max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 8px; }
+  .logo { font-family: var(--font-d); font-size: 28px; letter-spacing: .02em; display: flex; align-items: center; gap: 10px; }
+  .logo svg { width: 32px; height: 32px; flex: none; }
+  .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; color: var(--mute); }
+
+  .hero { padding: 8px 0 24px; }
+  .hero h1 { font-family: var(--font-d); font-weight: 400; font-size: clamp(30px, 5vw, 46px); line-height: 1.1; margin: 0; }
+  .hero h1 em { font-style: normal; color: var(--gold); }
+  .hero p { color: var(--mute); margin: 10px 0 0; max-width: 48ch; }
+
+  .sec-title { font-size: 13px; font-weight: 700; color: var(--mute); letter-spacing: .06em; margin: 0 0 12px; }
+
+  #games { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+
+  .card {
+    all: unset; cursor: pointer; display: grid; gap: 8px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px; text-align: left;
+    transition: transform .12s, border-color .12s, background .12s;
+    position: relative; overflow: hidden;
+  }
+  .card:hover { border-color: var(--gold); background: var(--panel2); transform: translateY(-2px); }
+  .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .card .thumb {
+    height: 110px; border-radius: 10px; display: grid; place-items: center; font-size: 44px;
+    background: radial-gradient(120% 120% at 30% 20%, #1d406a, #0c1a2c);
+    border: 1px solid var(--line);
+  }
+  .card strong { font-size: 18px; }
+  .card .desc { color: var(--mute); font-size: 13.5px; }
+  .card .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .tag { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--bg2); border: 1px solid var(--line); color: var(--mute); }
+  .tag.warn { color: var(--gold); border-color: #5a4720; background: #241a06; }
+  .tag.ready { color: #4cc38f; border-color: #1f4a37; background: #082018; }
+
+  .empty { color: var(--mute); border: 1px dashed var(--line); border-radius: 12px; padding: 20px; text-align: center; }
+  footer { margin-top: 32px; color: #5a7290; font-size: 12.5px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <rect x="3" y="4" width="7" height="32" rx="3.5" fill="#f2dcae"/>
+        <rect x="13" y="4" width="7" height="32" rx="3.5" fill="#8a5a2f"/>
+        <rect x="23" y="4" width="7" height="32" rx="3.5" fill="#f2dcae"/>
+        <rect x="33" y="4" width="5" height="32" rx="2.5" fill="#8a5a2f"/>
+        <circle cx="6.5" cy="11" r="2" fill="#ff6b57"/>
+      </svg>
+      웹게임 허브
+    </div>
+    <span class="chip" id="count">게임 0개</span>
+  </header>
+
+  <section class="hero">
+    <h1>여러 가지 <em>웹게임</em>을<br>한 곳에서.</h1>
+    <p>게임을 고르면 새 창에서 열립니다. 창을 닫으면 이 화면으로 돌아옵니다.</p>
+  </section>
+
+  <h2 class="sec-title">게임 목록</h2>
+  <div id="games"></div>
+  <div id="empty" class="empty" hidden>등록된 게임이 없습니다.</div>
+
+  <footer>© 웹게임 허브</footer>
+</div>
+
+<script>
+/* ============================================================
+   게임 등록소 (개발자용)
+   - 항목을 추가하면 카드가 자동으로 생깁니다.
+   - src: 게임 HTML 파일 경로 (허브 파일 기준 상대 경로)
+   - online: 온라인 대전 지원 여부 (false면 "온라인 준비 중" 표시)
+   ============================================================ */
+const GAMES = [
+  {
+    id: 'yutmarble',
+    title: '윷마블',
+    desc: '윷을 던져 세계 도시에 투자!',
+    thumb: '🪵',
+    src: 'games/yutmarble.html',
+    online: false,
+    tags: ['보드', '전략', '2~8인'],
+  },
+];
+
+/* ============================================================ */
+
+const gamesBox = document.getElementById('games');
+const emptyBox = document.getElementById('empty');
+const countEl = document.getElementById('count');
+
+function render() {
+  gamesBox.innerHTML = '';
+  countEl.textContent = `게임 ${GAMES.length}개`;
+  if (!GAMES.length) { emptyBox.hidden = false; return; }
+  emptyBox.hidden = true;
+
+  GAMES.forEach(g => {
+    const card = document.createElement('button');
+    card.className = 'card';
+    card.type = 'button';
+    card.setAttribute('aria-label', `${g.title} 열기`);
+
+    const tags = (g.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+    const onTag = g.online
+      ? '<span class="tag ready">온라인</span>'
+      : '<span class="tag warn">온라인 준비 중</span>';
+
+    card.innerHTML = `
+      <div class="thumb" aria-hidden="true">${g.thumb || '🎮'}</div>
+      <strong>${escapeHtml(g.title)}</strong>
+      <span class="desc">${escapeHtml(g.desc || '')}</span>
+      <span class="meta">${tags}${onTag}</span>
+    `;
+    card.addEventListener('click', () => openGame(g));
+    gamesBox.appendChild(card);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+let openedWin = null;
+
+function openGame(g) {
+  if (openedWin && !openedWin.closed) {
+    try { openedWin.close(); } catch (e) { /* noop */ }
+  }
+  const url = new URL(g.src, location.href).href;
+  openedWin = window.open(url, '_blank', 'noopener');
+  if (!openedWin) {
+    alert('팝업이 차단되어 게임을 열 수 없습니다.\n브라우저 주소창의 팝업 차단을 허용해 주세요.');
+    return;
+  }
+  openedWin.focus();
+}
+
+render();
+</script>
+</body>
+</html>
